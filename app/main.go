@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-
 	fmt.Println("Go Web Assembly")
 	js.Global().Set("createMaze", createWrapper())
 	js.Global().Set("solveMaze", solveWrapper())
@@ -37,10 +36,8 @@ func createWrapper() js.Func {
 			return "Invalid no of arguments passed"
 		}
 		inputSize := args[0].String()
-		fmt.Println("input Size", inputSize)
 		size, err := strconv.Atoi(inputSize)
 		if err != nil {
-			fmt.Println(err)
 			return "size must be an integer"
 		}
 
@@ -66,7 +63,6 @@ func solve(inputbytes []byte) (string, error) {
 
 	err := readJSON(inputbytes, &input)
 	if err != nil {
-		fmt.Println("DEBUG in readJSON:", err)
 		return "", err
 	}
 
@@ -81,8 +77,6 @@ func solve(inputbytes []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	fmt.Println("DEBUG after solve and writeJSON", resp)
 	return string(resp), nil
 }
 
@@ -92,7 +86,6 @@ func solveWrapper() js.Func {
 			return "Invalid no of arguments passed"
 		}
 		inputbytes := args[0].String()
-		fmt.Println("DEBUG", inputbytes)
 		resp, err := solve([]byte(inputbytes))
 		if err != nil {
 			return err.Error()

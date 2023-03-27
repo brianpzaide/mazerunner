@@ -232,24 +232,6 @@
             }else{
                 document.getElementById('sizeError').innerText = obj
             }
-            
-
-            /*var xhttp = new XMLHttpRequest();
-            xhttp.open("GET", "/getmaze?size=" + inputMazeSize, true);
-            xhttp.send();
-            xhttp.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {
-                    const obj= JSON.parse(this.responseText);
-                    numCells = obj.mazeSize;
-                    cellSize = obj.cellSize;
-                    mazeString = obj.mazeString;
-                    endPoints[0] = {row: 0, col: 0};
-                    endPoints[1] = {row: (numCells-1)/2, col: (numCells-1)/2};
-                    drawBoard();
-                }
-            };*/
-            
-            
         }
     }
 
@@ -261,33 +243,18 @@
             rowEnd: endPoints[1].row,
             colEnd: endPoints[1].col
         }
-        console.log(JSON.stringify(puzzle))
+        // console.log(JSON.stringify(puzzle))
         const obj = solveMaze(JSON.stringify(puzzle))
-        console.log(obj)
+        // console.log(obj)
         const mazeJson = JSON.parse(obj);
         if (mazeJson.path != null){
             currentPath = mazeJson.path;
-            console.log(currentPath);
+            // console.log(currentPath);
             // draw path
             draw_path();
         }else{
             document.getElementById('sizeError').innerText = obj
         }
-        
-
-        /*var xhttp = new XMLHttpRequest();
-        xhttp.open("POST", "/solvemaze", true);
-        xhttp.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
-        xhttp.send(JSON.stringify(puzzle));
-        xhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-                const obj= JSON.parse(this.responseText);
-                currentPath = obj.path;
-                console.log(currentPath);
-                // draw path
-                draw_path();
-            }
-        };*/
     }
 
     function moveStartPosition(e){
