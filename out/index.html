@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <style>
+        body {
+            background: lightblue;
+        }
+
+        canvas {
+            padding: 0;
+            margin: auto;
+            display: block;
+            background: #fff;
+            margin-top: 50px;
+        }
+
+        div{
+            width: 350px;
+            margin: auto;
+        }
+
+        .error {
+            color: #C0392B;
+            display: block;
+        }
+    </style>
+    <script src="wasm_exec.js"></script>
+    <script>
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("mr.wasm"), go.importObject).then((result) => {
+            go.run(result.instance);
+        });
+    </script>
+</head>
+<body>
+    <div>
+        <label class='error' id="sizeError"></label>
+        <label>Size:</label>
+        <input type='number' id="mazeSize" name='mazeSize'>
+        <button type='button' onclick="getMaze()">Get Maze</button>
+    </div>
+    
+    <canvas id="myCanvas" ></canvas>
+    
+
+<script type="text/javascript" language="javascript">
+
+    const errMsg = "size must be between 3 and 50";
+    
+    const white = '#FFFFFF';
+    const black = '#000000';
+    const red = '#f91707';
+    const green = '#4EB722';
+
+    const thickLine = 5;
+    const thinLine = 2;
+    
+    var inputMazeSize;
+
+    var currentPath = [];
+    var endPoints = [];
+
+    // dimensions for canvas
+    var numCells = 0;
+    var cellSize = 0;
+    var rectSize = 0;
+    
+    var c = document.getElementById("myCanvas");
+    c.height = 0;
+    c.width = 0;
+    var canvaswidth = cellSize * numCells;
+    var canvasheight = cellSize * numCells;
+    var context = c.getContext("2d");
+
+
+    var initial = true;
+
+    var mazeString = "";
+
+    function drawBoard(){
+        var lineWidth = 5;
+        rectSize = cellSize-4;
+        canvaswidth = cellSize * numCells;
+        canvasheight = cellSize * numCells;
+        c.height = canvasheight
+        c.width = canvaswidth
+
+        context.strokeStyle = "black";
+        for (var x = 0; x <= canvaswidth; x += cellSize) {
+            context.beginPath();
+            context.moveTo(x, 0);
+            context.lineTo(x, canvasheight);
+            if(x === 0 || x === canvaswidth){
+                lineWidth = thickLine+2;
+            } else{
+                lineWidth = thinLine;
+            }
+            context.lineWidth = lineWidth;
+            context.stroke();
+        }
+
+
+        for (var x = 0; x <= canvasheight; x += cellSize) {
+            context.beginPath();
+            context.moveTo(0, x);
+            context.lineTo(canvaswidth, x);
+            if(x === 0 || x === canvasheight){
+                lineWidth = thickLine+2;
+            } else{
+                lineWidth = thinLine
+            }
+            context.lineWidth = lineWidth;
+            context.stroke();
+        }
+
+        var t = 0;
+        for (var row = 0; row < numCells; row++) {
+            
+            for (var col = 0; col < numCells; col++) {
+                
+
+                //checking for vertical wall
+                if (col < numCells-1){
+                    context.beginPath();
+                    context.moveTo((col+1)*cellSize, (row)*cellSize);
+                    context.lineTo((col+1)*cellSize, (row+1)*cellSize);
+                    t = ((row*(2*numCells-1)) + col) + ((row*(2*numCells-1)) + col + 1);
+                    //console.log("vertical ", mazeString[t], "row: " + row, "col: " + col);
+                    if(mazeString[t] === '0'){
+                        lineWidth = thickLine
+                    } else{
+                        lineWidth = thinLine
+                    }
+                    context.lineWidth = lineWidth;
+                    context.stroke();
+                }
+                //checking for horizontal wall
+                if (row < numCells-1){
+                    context.beginPath();
+                    context.moveTo((col)*cellSize, (row+1)*cellSize);
+                    context.lineTo((col+1)*cellSize, (row+1)*cellSize);
+                    t = (row*(2*numCells-1)+col) + ((row+1)*(2*numCells-1) + col);
+                    //console.log("horizontal ", mazeString[t], "row: " + row, "col: " + col);
+                    if(mazeString[t] === '0'){
+                        lineWidth = thickLine
+                    } else{
+                        lineWidth = thinLine
+                    }
+                    context.lineWidth = lineWidth;
+                    context.stroke();
+                }
+            }
+        }
+
+        // highlighting the start position
+        context.fillStyle = green;
+        context.fillRect((endPoints[0].col)*cellSize+2, (endPoints[0].row)*cellSize+2, rectSize, rectSize);
+
+        if(initial === true){
+            initial = false;
+            c.addEventListener('mousedown', (e) => {
+                const col = Math.floor(e.offsetX / cellSize);
+                const row = Math.floor(e.offsetY / cellSize);
+
+                endPoints[1] = {row: row, col: col}
+                const start_x = col * cellSize + 2;
+                const start_y = row * cellSize + 2;
+                getPath();
+            })
+
+            c.addEventListener('mouseup', (e) => {
+                // erase path by redrawing the board
+                drawBoard();
+                context.fillStyle = green;
+                context.fillRect(endPoints[0].col*cellSize+2, endPoints[0].row*cellSize+2, rectSize, rectSize);
+
+            })
+
+            window.addEventListener('keydown',this.moveStartPosition,false);
+        }
+    }
+
+
+    function draw_path(){
+        
+        for(var i = 0; i < currentPath.length - 1; i++){
+
+            const startX = (currentPath[i].col/2)*cellSize + (cellSize/2);
+            const startY = (currentPath[i].row/2)*cellSize + (cellSize/2);
+            const endX = (currentPath[i+1].col/2)*cellSize + (cellSize/2);
+            const endY = (currentPath[i+1].row/2)*cellSize + (cellSize/2);
+
+            context.beginPath();
+            context.moveTo(startX, startY);
+            context.lineTo(endX, endY);
+            context.strokeStyle = red;
+            context.lineWidth = thickLine;
+            context.stroke();
+        }
+
+        const lastElement = currentPath[0];
+
+        const startX = (lastElement.col/2)*cellSize + (cellSize/2);
+        const startY = (lastElement.row/2)*cellSize + (cellSize/2);
+        const endX = (endPoints[1].col)*cellSize + (cellSize/2);
+        const endY = (endPoints[1].row)*cellSize + (cellSize/2);
+
+        context.beginPath();
+        context.moveTo(startX, startY);
+        context.lineTo(endX, endY);
+        context.strokeStyle = red;
+        context.lineWidth = thickLine;
+        context.stroke();
+    }
+
+    function getMaze() {
+        inputMazeSize = document.getElementById('mazeSize').value
+        if (inputMazeSize < 3){
+            document.getElementById('sizeError').innerText = "size must be integer greater than 2"
+        } else{
+            document.getElementById('sizeError').innerText = ""
+            const obj = createMaze(inputMazeSize)
+            const mazeJson = JSON.parse(obj);
+            numCells = mazeJson.mazeSize;
+            cellSize = mazeJson.cellSize;
+            mazeString = mazeJson.mazeString;
+            if (mazeString != null){
+                endPoints[0] = {row: 0, col: 0};
+                endPoints[1] = {row: (numCells-1)/2, col: (numCells-1)/2};
+                drawBoard();
+            }else{
+                document.getElementById('sizeError').innerText = obj
+            }
+            
+
+            /*var xhttp = new XMLHttpRequest();
+            xhttp.open("GET", "/getmaze?size=" + inputMazeSize, true);
+            xhttp.send();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    const obj= JSON.parse(this.responseText);
+                    numCells = obj.mazeSize;
+                    cellSize = obj.cellSize;
+                    mazeString = obj.mazeString;
+                    endPoints[0] = {row: 0, col: 0};
+                    endPoints[1] = {row: (numCells-1)/2, col: (numCells-1)/2};
+                    drawBoard();
+                }
+            };*/
+            
+            
+        }
+    }
+
+    function getPath() {
+        let puzzle = { 
+            mazeString: mazeString, 
+            rowStart: endPoints[0].row,
+            colStart: endPoints[0].col,
+            rowEnd: endPoints[1].row,
+            colEnd: endPoints[1].col
+        }
+        console.log(JSON.stringify(puzzle))
+        const obj = solveMaze(JSON.stringify(puzzle))
+        console.log(obj)
+        const mazeJson = JSON.parse(obj);
+        if (mazeJson.path != null){
+            currentPath = mazeJson.path;
+            console.log(currentPath);
+            // draw path
+            draw_path();
+        }else{
+            document.getElementById('sizeError').innerText = obj
+        }
+        
+
+        /*var xhttp = new XMLHttpRequest();
+        xhttp.open("POST", "/solvemaze", true);
+        xhttp.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
+        xhttp.send(JSON.stringify(puzzle));
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                const obj= JSON.parse(this.responseText);
+                currentPath = obj.path;
+                console.log(currentPath);
+                // draw path
+                draw_path();
+            }
+        };*/
+    }
+
+    function moveStartPosition(e){
+
+        var code = e.keyCode;
+        var tempStartPosition = {row: endPoints[0].row, col: endPoints[0].col}
+        switch (code) {
+
+            case 37: 
+                tempStartPosition.col -= 1
+                break; //Left key
+            case 38: 
+                tempStartPosition.row -= 1
+                break; //Up key
+            case 39: 
+                tempStartPosition.col += 1
+                break; //Right key
+            case 40: 
+                tempStartPosition.row += 1
+                break; //Down key
+        }
+
+        if (tempStartPosition.row >=0 && tempStartPosition.row < numCells && tempStartPosition.col >=0 && tempStartPosition.col < numCells){
+            context.fillStyle = white;
+            context.fillRect(endPoints[0].col*cellSize + 2, endPoints[0].row*cellSize + 2, rectSize, rectSize);
+            
+            endPoints[0].row = tempStartPosition.row;
+            endPoints[0].col = tempStartPosition.col;
+
+            context.fillStyle = green;
+            context.fillRect(endPoints[0].col*cellSize + 2, endPoints[0].row*cellSize + 2, rectSize, rectSize);
+        }
+    }
+
+</script>
+</body>
+</html>
+
