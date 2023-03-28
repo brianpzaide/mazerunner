@@ -20,6 +20,11 @@
             margin: auto;
         }
 
+        .instruction {
+            color: #C0392B;
+            display: block;
+        }
+
         .error {
             color: #C0392B;
             display: block;
@@ -39,6 +44,7 @@
         <label>Size:</label>
         <input type='number' id="mazeSize" name='mazeSize'>
         <button type='button' onclick="getMaze()">Get Maze</button>
+        <p class='instruction'>move the green dot around using the arrow keys, click on any open cell to see the shortest path between the green dot and the cell just clicked.</p>
     </div>
     
     <canvas id="myCanvas" ></canvas>
