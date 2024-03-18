@@ -1,11 +1,15 @@
 # mazerunner
 
-A simple app made using HTML5 canvas and go-wasm
+Mazerunner is an application that generates random square mazes of varyinge sizes and finds the shortest path between any two points within the maze. It utilizes HTML5 canvas for rendering and Go WebAssembly (go-wasm) for backend processing.
+Prim's minimal spanning tree algorithm is used to generate random square mazes, while Dijkstra's shortest path algorithm is used to calculate the shortest path between user-selected points.
 
-Prim's mst algorithm is used to generate a random square maze.
-Dijkstra's shortest path algorithm is used to find a shortest path between any two points chosen by the user.
+### Features
 
-#### To build
+- Generate random square mazes of varying sizes.
+- Find the shortest path between any two points within the maze.
+- Interactive visualization using HTML5 canvas.
+
+### To build
 copy the javascript glue code that already comes with the go installation into the ```out``` directory
 
 ```cp $(go env GOROOT)/misc/wasm/wasm_exec.js ./out/```
@@ -15,11 +19,14 @@ compile the go program to webassembly
 cd app
 GOOS=js GOARCH=wasm go build -o ../out/mr.wasm
 ```
-#### To run
-change into the ```out``` directory and run the python http server
+### To run
+change to the ```out``` directory and start the python HTTP server
 
 ```python3 -m http.server```
 
-point the browser to ```localhost:8000``` 
+Open your web browser and navigate to ```localhost:8000```. Interact with the maze generator and pathfinding features directly in your browser.  
 
-[Demo](https://brianpzaide.github.io/mazerunner)
+### Demo
+Check out the [Demo](https://brianpzaide.github.io/mazerunner) to see Mazerunner in action.
+
+
